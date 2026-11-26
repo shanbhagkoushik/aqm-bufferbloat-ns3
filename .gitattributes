@@ -1,0 +1,8 @@
+* text=auto eol=lf
+*.sh eol=lf
+*.py eol=lf
+*.cc eol=lf
+*.h eol=lf
+*.md eol=lf
+*.txt eol=lf
+*.csv eol=lf
