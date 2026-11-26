@@ -15,6 +15,7 @@ __pycache__/
 # Results directories
 results/*.json
 results/*.csv
+!results/aqm_results.csv
 results/*.png
 
 # IDE

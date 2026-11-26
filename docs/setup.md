@@ -24,8 +24,19 @@ git checkout bd2e108bf  # or later
 ### Build ns-3
 
 ```bash
-./ns3 configure --enable-examples --enable-tests
+# With NetAnim support (for visualization)
+./ns3 configure --enable-examples --enable-tests --enable-netanim
 ./ns3 build
+```
+
+### NetAnim Viewer
+
+Download NetAnim from https://www.nsnam.org/netanim/ or install via package manager:
+```bash
+# Ubuntu/Debian
+sudo apt-get install netanim
+
+# Or download binary from ns-3 website
 ```
 
 ### Python Dependencies (for analysis)
@@ -57,6 +68,15 @@ cd /path/to/ns-3-dev
 ./ns3 run "scratch/aqm-bufferbloat-simulation --queueDisc=FqCoDel --test=rrul --nClients=3 --seed=1 --run=1 --simTime=60 --outputDir=/tmp/test"
 ```
 
+### Quick test with NetAnim visualization
+
+```bash
+cd /path/to/ns-3-dev
+./ns3 run "scratch/aqm-bufferbloat-simulation --queueDisc=FqCoDel --test=rrul --nClients=3 --seed=1 --run=1 --simTime=60 --outputDir=/tmp/test --enableNetAnim=1"
+# Output: /tmp/test/aqm-FqCoDel-rrul-s1.xml
+# Open with: netanim /tmp/test/aqm-FqCoDel-rrul-s1.xml
+```
+
 ### Full batch (60 runs)
 
 ```bash
@@ -65,6 +85,13 @@ cd /path/to/aqm-bufferbloat-ns3
 ```
 
 Output: `results/{QDISC}_{TEST}_s{SEED}/` with Flent JSON files.
+
+### Full batch with NetAnim (generates 60 .xml files)
+
+```bash
+cd /path/to/aqm-bufferbloat-ns3
+ENABLE_NETANIM=1 ./scripts/run_all_sims.sh results 1 2 3 4 5
+```
 
 ## Analyzing Results
 

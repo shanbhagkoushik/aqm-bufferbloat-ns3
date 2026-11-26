@@ -40,6 +40,7 @@
 #include "ns3/traffic-control-module.h"
 #include "ns3/flow-monitor-module.h"
 #include "ns3/flent-application.h"  // From GSoC-2026-flent-application branch
+#include "ns3/netanim-module.h"     // NetAnim visualization
 
 #include <filesystem>
 #include <fstream>
@@ -62,6 +63,7 @@ struct SimulationParams {
   std::string outputDir = ".";             // Output directory for results
   bool enablePcap = false;                 // Enable PCAP tracing
   bool enableBql = true;                   // Enable BQL (DynamicQueueLimits) on bottleneck
+  bool enableNetAnim = false;              // Enable NetAnim visualization
 };
 
 // =============================================================================
@@ -83,6 +85,7 @@ SimulationParams ParseArguments(int argc, char* argv[]) {
   cmd.AddValue("outputDir", "Output directory", params.outputDir);
   cmd.AddValue("pcap", "Enable PCAP tracing", params.enablePcap);
   cmd.AddValue("enableBql", "Enable BQL (DynamicQueueLimits) on bottleneck", params.enableBql);
+  cmd.AddValue("enableNetAnim", "Enable NetAnim visualization output", params.enableNetAnim);
   cmd.Parse(argc, argv);
 
   // Validate nClients
@@ -394,6 +397,57 @@ int main(int argc, char* argv[]) {
   // -------------------------------------------------------------------------
   FlowMonitorHelper flowmon;
   Ptr<FlowMonitor> monitor = flowmon.InstallAll();
+
+  // -------------------------------------------------------------------------
+  // NetAnim visualization (optional)
+  // -------------------------------------------------------------------------
+  Ptr<AnimationInterface> anim = nullptr;
+  if (params.enableNetAnim) {
+    std::ostringstream animOss;
+    animOss << params.outputDir << "/aqm-" << params.queueDiscType
+            << "-" << params.testName << "-s" << params.seed << ".xml";
+    anim = CreateObject<AnimationInterface>(animOss.str());
+    std::cout << "NetAnim output will be written to: " << animOss.str() << std::endl;
+
+    // Set node positions for dumbbell topology visualization
+    // Left clients: x=100, y=100, 200, 300 (spread vertically)
+    // Routers: R1 at x=400, y=150; R2 at x=500, y=150
+    // Right servers: x=600, y=100, 200, 300 (spread vertically)
+    double clientX = 100.0;
+    double serverX = 600.0;
+    double router1X = 400.0;
+    double router2X = 500.0;
+    double routerY = 150.0;
+    double yStart = 100.0;
+    double yStep = 100.0;
+
+    for (uint32_t i = 0; i < params.nClients; ++i) {
+      double y = yStart + i * yStep;
+      anim->SetConstantPosition(leftClients.Get(i), clientX, y);
+      anim->SetConstantPosition(rightServers.Get(i), serverX, y);
+    }
+    anim->SetConstantPosition(R1, router1X, routerY);
+    anim->SetConstantPosition(R2, router2X, routerY);
+
+    // Set node descriptions for clarity
+    for (uint32_t i = 0; i < params.nClients; ++i) {
+      anim->UpdateNodeDescription(leftClients.Get(i), "Client " + std::to_string(i));
+      anim->UpdateNodeDescription(rightServers.Get(i), "Server " + std::to_string(i));
+    }
+    anim->UpdateNodeDescription(R1, "Router R1");
+    anim->UpdateNodeDescription(R2, "Router R2");
+
+    // Color coding
+    for (uint32_t i = 0; i < params.nClients; ++i) {
+      anim->UpdateNodeColor(leftClients.Get(i), 0, 255, 0);   // Green for clients
+      anim->UpdateNodeColor(rightServers.Get(i), 0, 0, 255);  // Blue for servers
+    }
+    anim->UpdateNodeColor(R1, 255, 165, 0);  // Orange for R1
+    anim->UpdateNodeColor(R2, 255, 0, 0);    // Red for R2
+
+    // Enable packet metadata for animation
+    anim->EnablePacketMetadata(true);
+  }
 
   // -------------------------------------------------------------------------
   // Run simulation

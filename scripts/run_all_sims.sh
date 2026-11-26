@@ -32,6 +32,9 @@ TESTS=("tcp_upload" "tcp_download" "rrul")
 # Simulation time (seconds) - Flent tests typically run 60s
 SIM_TIME=60
 
+# Enable NetAnim (set to 1 to generate .xml files for visualization)
+ENABLE_NETANIM=0
+
 # Create output directory
 mkdir -p "$OUTPUT_DIR"
 
@@ -70,6 +73,10 @@ for QDISC in "${QUEUE_DISCS[@]}"; do
             mkdir -p "$OUTPUT_SUBDIR"
 
             # Run simulation using ./ns3
+            NETANIM_FLAG=""
+            if [ "$ENABLE_NETANIM" -eq 1 ]; then
+                NETANIM_FLAG="--enableNetAnim=1"
+            fi
             ./ns3 run "scratch/aqm-bufferbloat-simulation \
                 --queueDisc=$QDISC \
                 --test=$TEST \
@@ -77,7 +84,8 @@ for QDISC in "${QUEUE_DISCS[@]}"; do
                 --seed=$SEED \
                 --run=$RUN \
                 --simTime=$SIM_TIME \
-                --outputDir=$OUTPUT_SUBDIR"
+                --outputDir=$OUTPUT_SUBDIR \
+                $NETANIM_FLAG"
 
             echo "  -> Results in $OUTPUT_SUBDIR"
         done
